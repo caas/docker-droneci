@@ -1,0 +1,99 @@
+version: '3.3'
+services:
+
+  caddy_service:
+    container_name: caddy-proxy
+    image: abiosoft/caddy:0.10.10
+    privileged: true
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 165536
+        hard: 165536
+    cap_add:
+      - ALL
+    volumes:
+      - ./config:/root/config
+      - ./.caddy:/root/.caddy
+      - ./Caddyfile:/etc/Caddyfile
+    depends_on:
+      - drone-server
+    ports:
+      - 443:443
+      - 80:80
+    networks:
+      drone_net:
+        ipv4_address: 10.3.0.42
+
+  drone-server:
+    container_name: drone-server
+    image: drone/drone:0.8
+    volumes:
+      - ./lib:/var/lib/drone
+    env_file:
+      - ./env/.env-drone
+    environment:
+      - DRONE_GITHUB=true
+      - DRONE_OPEN=true
+      - DRONE_ORGS=tajawal
+      - DRONE_GITHUB_PRIVATE_MODE=true
+      - DRONE_ADMIN=
+      - DRONE_HOST=http://drone-ci.local
+    ports:
+      - 8000:8000
+      - 1900:1900
+    networks:
+      drone_net:
+        ipv4_address: 10.3.0.43
+    privileged: true
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 165536
+        hard: 165536
+    cap_add:
+      - ALL
+
+
+  drone-agent:
+    container_name: drone-agent
+    image: drone/agent:0.8
+    command: agent
+    restart: always
+    depends_on:
+      - drone-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./repo:/var/www
+    environment:
+      - DRONE_SERVER=drone-server:9000
+      - DRONE_SECRET=5c81da546105b8f7827f49
+    networks:
+      drone_net:
+        ipv4_address: 10.3.0.44
+    privileged: true
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 165536
+        hard: 165536
+    cap_add:
+      - ALL
+
+
+
+networks:
+  drone_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.3.0.0/16

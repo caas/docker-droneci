@@ -1,0 +1,9 @@
+drone-ci.local {
+    gzip {
+        not /stream/
+    }
+    proxy / localhost:8000 {
+        websocket
+        transparent
+    }
+}
