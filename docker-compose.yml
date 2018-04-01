@@ -1,9 +1,9 @@
-version: '3.3'
+version: '3.5'
 services:
 
   caddy_service:
     container_name: caddy-proxy
-    image: abiosoft/caddy:0.10.10
+    image: abiosoft/caddy:0.10.11
     privileged: true
     ulimits:
       nproc: 65535
